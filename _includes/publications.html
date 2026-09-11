@@ -1,0 +1,278 @@
+<style>
+/* ── Publication filter tabs ── */
+.pub-filter-wrap{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.6rem}
+.pub-filter-btn{padding:.45rem .9rem;border-radius:999px;font-size:.85rem;font-weight:700;
+  border:1px solid #e2e8f0;background:#f8fafc;color:#475569;cursor:pointer;
+  transition:all .15s;user-select:none}
+.pub-filter-btn:hover{border-color:#c7d2fe;background:#eef2ff;color:#3730a3}
+.pub-filter-btn.active{background:#3730a3;color:#fff;border-color:#3730a3;
+  box-shadow:0 4px 12px rgba(55,48,163,.25)}
+.pub-count-badge{display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:50%;font-size:.7rem;font-weight:800;
+  background:rgba(255,255,255,.25);margin-left:.3rem}
+.pub-filter-btn:not(.active) .pub-count-badge{background:#e2e8f0;color:#475569}
+
+/* ── Year group header ── */
+.pub-year-group{margin-top:1.6rem}
+.pub-year-label{font-size:1.05rem;font-weight:900;color:#1e293b;padding:.3rem 0;
+  border-bottom:2px solid #e2e8f0;margin-bottom:.9rem;display:flex;align-items:center;gap:.5rem}
+.pub-year-label::before{content:"";display:inline-block;width:4px;height:1.1rem;
+  border-radius:2px;background:linear-gradient(180deg,#6366f1,#22d3ee)}
+
+/* ── Publication card ── */
+.pubs-outer{display:grid;gap:1rem}
+.pub-card{display:grid;grid-template-columns:108px 1fr;gap:1rem;padding:1rem 1rem 1rem 1.1rem;
+  border-radius:16px;background:#fff;border:1px solid #e9eef3;
+  box-shadow:0 6px 22px rgba(16,24,40,.05);position:relative;overflow:hidden;
+  transition:transform .18s,box-shadow .18s,border-color .18s}
+.pub-card:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(16,24,40,.09);border-color:#c7d2fe}
+.pub-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:linear-gradient(180deg,#6366f1,#22d3ee,#f59e0b);background-size:100% 300%;
+  animation:barSweep 5s linear infinite}
+@keyframes barSweep{0%{background-position:0 0}100%{background-position:0 100%}}
+
+/* Figure */
+.pub-fig{width:108px;height:108px;border-radius:10px;object-fit:cover;
+  border:1px solid #eef2f7;background:#f3f5f9}
+.pub-fig.contain{object-fit:contain}
+.pub-fig-ph{width:108px;height:108px;border-radius:10px;border:1px solid #eef2f7;
+  background:#f8fafc;display:grid;place-items:center;flex-shrink:0}
+
+/* Meta row */
+.pub-meta{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem;margin-bottom:.3rem}
+.pub-idx{font-weight:900;color:#475569;font-size:.9rem}
+.pub-badge{font-size:.7rem;padding:.18rem .45rem;border-radius:999px;font-weight:700;
+  border:1px solid #e2e8f0;background:#f8fafc;color:#475569}
+.b-journal{background:linear-gradient(90deg,#ecfeff,#eef2ff);border-color:#dbeafe;color:#1e3a8a}
+.b-conf{background:#fefce8;border-color:#fde68a;color:#713f12}
+.b-book{background:#f5f3ff;border-color:#ddd6fe;color:#4c1d95}
+.b-thesis{background:#f0fdf4;border-color:#bbf7d0;color:#14532d}
+
+/* Title + authors */
+.pub-title{font-size:1rem;font-weight:800;line-height:1.35;margin:.2rem 0 .3rem;
+  color:#111827;word-wrap:break-word;overflow-wrap:break-word}
+.pub-authors{font-size:.88rem;color:#4b5563;line-height:1.5;word-wrap:break-word}
+.pub-venue{font-size:.88rem;color:#4b5563;font-style:italic}
+.me-author{font-weight:900;text-decoration:underline;color:#111827}
+
+/* Action buttons */
+.pub-actions{margin-top:.55rem;display:flex;flex-wrap:wrap;gap:.4rem}
+.btn-chip{display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .65rem;
+  border-radius:999px;font-weight:700;font-size:.8rem;border:1px solid transparent;
+  text-decoration:none;transition:transform .12s,box-shadow .12s}
+.btn-chip:hover{transform:translateY(-1px);box-shadow:0 5px 10px rgba(0,0,0,.07)}
+.c-doi{background:#ecfeff;border-color:#a5f3fc;color:#075985}
+.c-pdf{background:#eef2ff;border-color:#c7d2fe;color:#3730a3}
+.c-code{background:#f0fdf4;border-color:#86efac;color:#166534}
+.c-slides{background:#fff7ed;border-color:#fdba74;color:#9a3412}
+.c-video{background:#fef2f2;border-color:#fca5a5;color:#991b1b}
+.c-dataset{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.me-strong{font-weight:900;text-decoration:underline}
+
+/* Hidden items (filter) */
+.pub-item[hidden]{display:none}
+
+@media(max-width:640px){
+  .pub-card{grid-template-columns:1fr}
+  .pub-fig,.pub-fig-ph{width:100%;height:140px}
+}
+</style>
+
+<script>
+(function(){
+  function initPubFilters(){
+    var btns = document.querySelectorAll('.pub-filter-btn');
+    var items = document.querySelectorAll('.pub-item');
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var filter = this.dataset.filter;
+        btns.forEach(function(b){ b.classList.remove('active'); });
+        this.classList.add('active');
+        // show/hide items
+        items.forEach(function(item){
+          if(filter === 'all' || item.dataset.type === filter){
+            item.removeAttribute('hidden');
+          } else {
+            item.setAttribute('hidden','');
+          }
+        });
+        // show/hide year group headers
+        document.querySelectorAll('.pub-year-group').forEach(function(grp){
+          var visible = grp.querySelectorAll('.pub-item:not([hidden])').length > 0;
+          grp.style.display = visible ? '' : 'none';
+        });
+      });
+    });
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', initPubFilters);
+  } else {
+    initPubFilters();
+  }
+})();
+</script>
+
+<!-- Filter tabs -->
+<div class="pub-filter-wrap" role="tablist" aria-label="Filter publications by type">
+  <button class="pub-filter-btn active" data-filter="all" type="button">
+    All <span class="pub-count-badge">{{ site.data.publications.journal | size | plus: site.data.publications.conference | size | plus: site.data.publications.thesis | size }}</span>
+  </button>
+  <button class="pub-filter-btn" data-filter="journal" type="button">
+    📄 Journals <span class="pub-count-badge">{{ site.data.publications.journal | size }}</span>
+  </button>
+  <button class="pub-filter-btn" data-filter="conference" type="button">
+    🎤 Conferences <span class="pub-count-badge">{{ site.data.publications.conference | size }}</span>
+  </button>
+  <button class="pub-filter-btn" data-filter="book" type="button">
+    📚 Book Chapters
+  </button>
+  <button class="pub-filter-btn" data-filter="thesis" type="button">
+    🎓 Thesis <span class="pub-count-badge">{{ site.data.publications.thesis | size }}</span>
+  </button>
+</div>
+
+<div class="pubs-outer">
+
+  <!-- ── Combine all into year groups ── -->
+  {% assign all_pubs = "" | split: "" %}
+  {% for item in site.data.publications.journal %}
+    {% assign tagged = item | hash %}
+    {% assign all_pubs = all_pubs | push: item %}
+  {% endfor %}
+  {% for item in site.data.publications.conference %}
+    {% assign all_pubs = all_pubs | push: item %}
+  {% endfor %}
+  {% for item in site.data.publications.thesis %}
+    {% assign all_pubs = all_pubs | push: item %}
+  {% endfor %}
+
+  {% assign years = "2025,2024,2023,2022,2021,2020" | split: "," %}
+
+  {% for year in years %}
+    {% assign year_has_items = false %}
+    {% for item in site.data.publications.journal %}{% if item.year == year %}{% assign year_has_items = true %}{% endif %}{% endfor %}
+    {% for item in site.data.publications.conference %}{% if item.year == year %}{% assign year_has_items = true %}{% endif %}{% endfor %}
+    {% for item in site.data.publications.thesis %}{% if item.year == year %}{% assign year_has_items = true %}{% endif %}{% endfor %}
+
+    {% if year_has_items %}
+    <div class="pub-year-group">
+      <div class="pub-year-label">{{ year }}</div>
+
+      <!-- journals this year -->
+      {% assign jitems = site.data.publications.journal %}
+      {% assign jtotal = jitems | size %}
+      {% for item in jitems %}
+        {% if item.year == year %}
+        {% assign jnum = jtotal | minus: forloop.index0 %}
+        <div class="pub-item" data-type="journal">
+          <article class="pub-card" id="J{{ jnum }}">
+            {% if item.figure and item.figure != "" %}
+              <img class="pub-fig{% if item.fit == 'contain' %} contain{% endif %}" src="{{ item.figure | relative_url }}" alt="paper figure" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+              <div class="pub-fig-ph" style="display:none" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" width="44" height="44"><path d="M4 5h16v14H4z" stroke="#cbd5e1" stroke-width="1.5"/><path d="M4 15l4-4 5 5 3-3 4 4" stroke="#cbd5e1" stroke-width="1.5"/></svg>
+              </div>
+            {% else %}
+              <div class="pub-fig-ph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" width="44" height="44"><path d="M4 5h16v14H4z" stroke="#cbd5e1" stroke-width="1.5"/><path d="M4 15l4-4 5 5 3-3 4 4" stroke="#cbd5e1" stroke-width="1.5"/></svg>
+              </div>
+            {% endif %}
+            <div>
+              <div class="pub-meta">
+                <span class="pub-idx">[J{{ jnum }}]</span>
+                <span class="pub-badge b-journal">Journal</span>
+                <span class="pub-badge">{{ item.year }}</span>
+              </div>
+              <h5 class="pub-title">{{ item.title }}</h5>
+              <div class="pub-authors">
+                {% for a in item.authors %}{% if forloop.index0 > 0 %}, {% endif %}{% if a.me == "1" %}<span class="me-strong">{{ a.name }}</span>{% else %}{{ a.name }}{% endif %}{% endfor %}
+              </div>
+              {% assign venue = item.journal | default: item.venue %}
+              {% if venue %}<div class="pub-venue">{{ venue }}</div>{% endif %}
+              <div class="pub-actions">
+                {% if item.doi and item.doi != "" %}<a class="btn-chip c-doi" href="{{ item.doi | strip }}" target="_blank" rel="noopener">DOI</a>{% endif %}
+                {% if item.paper and item.paper != "" %}<a class="btn-chip c-pdf" href="{{ item.paper | strip }}" target="_blank" rel="noopener">PDF</a>{% endif %}
+                {% if item.slides and item.slides != "" %}<a class="btn-chip c-slides" href="{{ item.slides }}" target="_blank" rel="noopener">Slides</a>{% endif %}
+                {% if item.videos and item.videos != "" %}<a class="btn-chip c-video" href="{{ item.videos }}" target="_blank" rel="noopener">Video</a>{% endif %}
+                {% if item.code and item.code != "" %}<a class="btn-chip c-code" href="{{ item.code }}" target="_blank" rel="noopener">Code</a>{% endif %}
+                {% if item.dataset and item.dataset != "" %}<a class="btn-chip c-dataset" href="{{ item.dataset }}" target="_blank" rel="noopener">Dataset</a>{% endif %}
+              </div>
+            </div>
+          </article>
+        </div>
+        {% endif %}
+      {% endfor %}
+
+      <!-- conferences this year -->
+      {% assign citems = site.data.publications.conference %}
+      {% assign ctotal = citems | size %}
+      {% for item in citems %}
+        {% if item.year == year %}
+        {% assign cnum = ctotal | minus: forloop.index0 %}
+        <div class="pub-item" data-type="conference">
+          <article class="pub-card" id="C{{ cnum }}">
+            {% if item.figure and item.figure != "" %}
+              <img class="pub-fig{% if item.fit == 'contain' %} contain{% endif %}" src="{{ item.figure | relative_url }}" alt="paper figure" onerror="this.style.display='none';this.nextElementSibling.style.display='grid'">
+              <div class="pub-fig-ph" style="display:none" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" width="44" height="44"><path d="M4 5h16v14H4z" stroke="#cbd5e1" stroke-width="1.5"/><path d="M4 15l4-4 5 5 3-3 4 4" stroke="#cbd5e1" stroke-width="1.5"/></svg>
+              </div>
+            {% else %}
+              <div class="pub-fig-ph" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" width="44" height="44"><path d="M4 5h16v14H4z" stroke="#cbd5e1" stroke-width="1.5"/><path d="M4 15l4-4 5 5 3-3 4 4" stroke="#cbd5e1" stroke-width="1.5"/></svg>
+              </div>
+            {% endif %}
+            <div>
+              <div class="pub-meta">
+                <span class="pub-idx">[C{{ cnum }}]</span>
+                <span class="pub-badge b-conf">Conference</span>
+                <span class="pub-badge">{{ item.year }}</span>
+              </div>
+              <h5 class="pub-title">{{ item.title }}</h5>
+              <div class="pub-authors">
+                {% for a in item.authors %}{% if forloop.index0 > 0 %}, {% endif %}{% if a.me == "1" %}<span class="me-strong">{{ a.name }}</span>{% else %}{{ a.name }}{% endif %}{% endfor %}
+              </div>
+              {% assign cvenue = item.venue | default: item.journal | default: item.publisher %}
+              {% if cvenue %}<div class="pub-venue">{{ cvenue }}</div>{% endif %}
+              <div class="pub-actions">
+                {% if item.doi and item.doi != "" %}<a class="btn-chip c-doi" href="{{ item.doi | strip }}" target="_blank" rel="noopener">DOI</a>{% endif %}
+                {% if item.paper and item.paper != "" %}<a class="btn-chip c-pdf" href="{{ item.paper | strip }}" target="_blank" rel="noopener">PDF</a>{% endif %}
+                {% if item.slides and item.slides != "" %}<a class="btn-chip c-slides" href="{{ item.slides }}" target="_blank" rel="noopener">Slides</a>{% endif %}
+                {% if item.videos and item.videos != "" %}<a class="btn-chip c-video" href="{{ item.videos }}" target="_blank" rel="noopener">Video</a>{% endif %}
+                {% if item.code and item.code != "" %}<a class="btn-chip c-code" href="{{ item.code }}" target="_blank" rel="noopener">Code</a>{% endif %}
+                {% if item.dataset and item.dataset != "" %}<a class="btn-chip c-dataset" href="{{ item.dataset }}" target="_blank" rel="noopener">Dataset</a>{% endif %}
+              </div>
+            </div>
+          </article>
+        </div>
+        {% endif %}
+      {% endfor %}
+
+      <!-- thesis this year -->
+      {% for item in site.data.publications.thesis %}
+        {% if item.year == year %}
+        <div class="pub-item" data-type="thesis">
+          <article class="pub-card" id="T1">
+            <div class="pub-fig-ph" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" width="44" height="44"><path d="M6 7h12M6 11h8M6 15h10" stroke="#cbd5e1" stroke-width="1.5"/></svg>
+            </div>
+            <div>
+              <div class="pub-meta">
+                <span class="pub-idx">[T1]</span>
+                <span class="pub-badge b-thesis">Thesis</span>
+                {% if item.year %}<span class="pub-badge">{{ item.year }}</span>{% endif %}
+              </div>
+              <h5 class="pub-title">{{ item.title }}</h5>
+              {% if item.publisher %}<div class="pub-venue">{{ item.publisher }}</div>{% endif %}
+              <div class="pub-actions">
+                {% if item.doi and item.doi != "" %}<a class="btn-chip c-doi" href="{{ item.doi | strip }}" target="_blank" rel="noopener">DOI</a>{% endif %}
+                {% if item.paper and item.paper != "" %}<a class="btn-chip c-pdf" href="{{ item.paper | strip }}" target="_blank" rel="noopener">PDF</a>{% endif %}
+              </div>
+            </div>
+          </article>
+        </div>
+        {% endif %}
+      {% endfor %}
+
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>

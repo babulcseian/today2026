@@ -1,0 +1,104 @@
+<style>
+/* ── News timeline cards ───────────────────────── */
+.news-section-title{font-weight:800;border-bottom:2px solid #e9eef3;padding-bottom:.6rem;margin-bottom:1.4rem}
+.news-timeline{display:grid;gap:.85rem;position:relative}
+.news-timeline::before{content:"";position:absolute;left:10px;top:8px;bottom:8px;width:2px;
+  background:linear-gradient(180deg,#6366f1,#22d3ee,#f59e0b);opacity:.3;border-radius:2px}
+.news-card{position:relative;padding:.9rem 1rem .9rem 2.8rem;border-radius:14px;
+  background:#fff;border:1px solid #e9eef3;
+  box-shadow:0 4px 16px rgba(16,24,40,.05);
+  transition:transform .15s,box-shadow .15s,border-color .15s}
+.news-card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(16,24,40,.09);border-color:#c7d2fe}
+.news-card::before{content:"";position:absolute;left:5px;top:1.15rem;
+  width:11px;height:11px;border-radius:50%;background:#fff;border:3px solid #6366f1}
+.news-date{font-size:.75rem;font-weight:700;color:#6366f1;text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:.18rem}
+.news-headline{font-size:.98rem;font-weight:800;color:#111827;margin:0 0 .25rem;line-height:1.35;
+  word-wrap:break-word;overflow-wrap:break-word}
+.news-desc{font-size:.9rem;color:#4b5563;line-height:1.55;margin:0 0 .5rem;
+  word-wrap:break-word;overflow-wrap:break-word}
+.news-btns{display:flex;flex-wrap:wrap;gap:.4rem}
+.news-btn{display:inline-flex;align-items:center;gap:.3rem;padding:.35rem .65rem;
+  border-radius:999px;font-weight:700;font-size:.8rem;
+  border:1px solid #c7d2fe;background:#eef2ff;color:#3730a3;
+  text-decoration:none;transition:transform .12s,box-shadow .12s}
+.news-btn:hover{transform:translateY(-1px);box-shadow:0 5px 10px rgba(0,0,0,.07)}
+.news-btn.cert{background:#ecfdf5;border-color:#6ee7b7;color:#065f46}
+.news-btn.award{background:#fef3c7;border-color:#fcd34d;color:#92400e}
+.news-more-wrap{text-align:center;margin-top:1rem}
+.news-more-btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;
+  border-radius:999px;font-weight:700;font-size:.88rem;
+  border:1px solid #c7d2fe;background:#eef2ff;color:#3730a3;
+  cursor:pointer;transition:transform .15s,box-shadow .15s;border:none}
+.news-more-btn:hover{transform:translateY(-1px);box-shadow:0 8px 18px rgba(0,0,0,.08)}
+.news-hidden{display:none}
+.news-all-link{margin-top:.9rem;font-size:.9rem}
+@media(max-width:640px){
+  .news-card{padding:.8rem .85rem .8rem 2.4rem}
+  .news-headline{font-size:.92rem}
+}
+</style>
+
+{% if page.title == "Home" %}
+<h3 class="news-section-title">📰 Latest News</h3>
+<div class="news-timeline">
+  {% assign count = 0 %}
+  {% for item in site.data.news %}
+    {% if item.last == "1" %}
+    <div class="news-card">
+      {% if item.date %}<div class="news-date">{{ item.date }}</div>{% endif %}
+      <p class="news-headline">{{ item.headline }}</p>
+      {% if item.description and item.description != "" %}
+        <p class="news-desc">{{ item.description }}</p>
+      {% endif %}
+      <div class="news-btns">
+        {% if item.link1_url and item.link1_url != "" %}
+          <a class="news-btn" href="{{ item.link1_url }}" target="_blank" rel="noopener">{{ item.link1_text | default: "Link" }}</a>
+        {% endif %}
+        {% if item.link2_url and item.link2_url != "" %}
+          <a class="news-btn cert" href="{{ item.link2_url }}" target="_blank" rel="noopener">{{ item.link2_text | default: "Certificate" }}</a>
+        {% endif %}
+        {% if item.message and item.link1_url == "" and item.link2_url == "" %}
+          <span style="font-size:.9rem;color:#4b5563">{{ item.message }}</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  {% endfor %}
+</div>
+<p class="news-all-link"><a href="{{ site.github.url }}/news" style="font-weight:700;color:#3730a3;text-decoration:none;">→ All news</a></p>
+
+{% else %}
+<h3 class="news-section-title">📰 News</h3>
+<div id="news-list" class="news-timeline">
+  {% for item in site.data.news %}
+  <div class="news-card{% if forloop.index > 5 %} news-hidden{% endif %}">
+    {% if item.date %}<div class="news-date">{{ item.date }}</div>{% endif %}
+    <p class="news-headline">{{ item.headline }}</p>
+    {% if item.description and item.description != "" %}
+      <p class="news-desc">{{ item.description }}</p>
+    {% endif %}
+    <div class="news-btns">
+      {% if item.link1_url and item.link1_url != "" %}
+        <a class="news-btn" href="{{ item.link1_url }}" target="_blank" rel="noopener">{{ item.link1_text | default: "Link" }}</a>
+      {% endif %}
+      {% if item.link2_url and item.link2_url != "" %}
+        <a class="news-btn cert" href="{{ item.link2_url }}" target="_blank" rel="noopener">{{ item.link2_text | default: "Certificate" }}</a>
+      {% endif %}
+      {% if item.message and item.link1_url == "" and item.link2_url == "" %}
+        <span style="font-size:.9rem;color:#4b5563">{{ item.message }}</span>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% assign news_total = site.data.news | size %}
+{% if news_total > 5 %}
+<div class="news-more-wrap">
+  <button class="news-more-btn" type="button"
+    onclick="document.querySelectorAll('#news-list .news-hidden').forEach(function(el){el.classList.remove('news-hidden')});this.style.display='none'">
+    Show more ({{ news_total | minus: 5 }} more) ↓
+  </button>
+</div>
+{% endif %}
+{% endif %}
